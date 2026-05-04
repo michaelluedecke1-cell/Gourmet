@@ -1,7 +1,6 @@
 {
   "name": "Gourmet Archiv Pro Plus",
-  "short_name": "Archiv",
-  "description": "Dein persönliches Rezeptarchiv",
+  "short_name": "Gourmet",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#f8fafc",
