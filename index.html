@@ -4,155 +4,129 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Gourmet Archiv Pro Plus</title>
-    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f97316">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1046/1046747.png">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .modal-active { opacity: 1 !important; pointer-events: auto !important; transform: scale(1) !important; }
-        .btn-header { white-space: nowrap; flex-shrink: 0; }
+        .hidden-view { display: none; }
+        .active-tab { border-bottom: 4px solid #f97316; color: #f97316; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-10 font-sans">
-
-    <div id="backupModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 opacity-0 pointer-events-none transition-all duration-200 text-center">
-        <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-all duration-200 border border-slate-100">
-            <span class="text-3xl">💾</span>
-            <h3 class="text-base font-bold text-slate-800 mt-2 mb-2">Backup erstellen</h3>
-            <p class="text-[11px] text-slate-500 mb-6 leading-relaxed px-2">Datei speichern?</p>
-            <div class="flex gap-3">
-                <button onclick="closeBackupModal()" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-2xl text-[11px] font-bold">Abbrechen</button>
-                <button onclick="confirmDownload()" class="flex-1 py-3 bg-orange-500 text-white rounded-2xl text-[11px] font-bold shadow-lg">Speichern</button>
-            </div>
-        </div>
-    </div>
-
+<body class="bg-slate-50 min-h-screen pb-20 font-sans">
     <nav class="bg-white border-b sticky top-0 z-50 shadow-sm">
-        <div class="max-w-2xl mx-auto px-3 h-16 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 overflow-hidden">
-                <button id="wakeLockBtn" onclick="toggleWakeLock()" class="btn-header px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-bold active:scale-95 transition-all">
-                    🕯️ <span id="wakeStatus">OFF</span>
-                </button>
-                <h1 class="text-base font-black text-orange-600 truncate">🍳 Archiv</h1>
-            </div>
-            
-            <div class="flex items-center gap-1.5">
-                <button onclick="openBackupModal()" class="btn-header px-2.5 py-2 bg-orange-50 text-orange-600 rounded-xl text-[10px] font-bold active:scale-95 transition-all">Backup</button>
-                <label class="btn-header px-2.5 py-2 bg-slate-100 text-slate-600 rounded-xl cursor-pointer text-[10px] font-bold active:scale-95 transition-all">
+        <div class="max-w-2xl mx-auto px-3 h-16 flex items-center justify-between">
+            <h1 class="text-base font-black text-orange-600">🍳 Archiv</h1>
+            <div class="flex gap-2">
+                <button onclick="openBackupModal()" class="px-2.5 py-2 bg-orange-50 text-orange-600 rounded-xl text-[10px] font-bold">Backup</button>
+                <label class="px-2.5 py-2 bg-slate-100 text-slate-600 rounded-xl cursor-pointer text-[10px] font-bold">
                     Laden <input type="file" id="importFile" class="hidden" accept=".json" onchange="importBackup(event)">
                 </label>
             </div>
         </div>
-    </nav>
-
-    <main class="max-w-2xl mx-auto p-4">
-        <div id="editor" class="bg-white rounded-3xl shadow-lg p-6 mb-8 border border-slate-100">
-            <h2 id="formTitle" class="text-lg font-bold mb-4 text-slate-700 font-sans">Neues Rezept</h2>
-            <input type="text" id="recipeTitle" placeholder="Titel..." class="w-full p-4 bg-slate-50 rounded-2xl mb-3 text-xl font-bold outline-none border border-transparent focus:border-orange-400">
-            <input type="text" id="recipeCategory" placeholder="Kategorie..." class="w-full p-3 bg-slate-50 rounded-xl mb-3 text-sm outline-none border border-transparent focus:border-orange-400">
-            <textarea id="recipeContent" rows="10" placeholder="Zutaten & Schritte..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-transparent focus:border-orange-400 text-lg custom-scroll mb-4"></textarea>
-            <button id="saveBtn" onclick="saveRecipe()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all text-sm uppercase">Rezept speichern</button>
+        <div class="flex max-w-2xl mx-auto border-t">
+            <button id="tab-editor" onclick="switchView('editor')" class="flex-1 py-3 font-bold text-sm active-tab">📝 Eingabe</button>
+            <button id="tab-list" onclick="switchView('list')" class="flex-1 py-3 font-bold text-sm text-slate-400">📖 Rezepte</button>
         </div>
-
-        <div id="categoryFilters" class="flex flex-wrap gap-2 py-2 mb-4"></div>
-        <input type="text" id="searchInput" onkeyup="renderRecipes()" placeholder="🔍 Suche..." class="w-full p-4 bg-white border rounded-2xl outline-none shadow-sm focus:border-orange-400 text-lg mb-8">
-        <div id="recipeList" class="space-y-6"></div>
+    </nav>
+    <main class="max-w-2xl mx-auto p-4">
+        <div id="view-editor" class="view-content">
+            <div class="bg-white rounded-3xl shadow-lg p-6 border border-slate-100">
+                <h2 id="formTitle" class="text-lg font-bold mb-4 text-slate-700">Neues Rezept</h2>
+                <input type="text" id="recipeTitle" placeholder="Titel..." class="w-full p-4 bg-slate-50 rounded-2xl mb-3 text-xl font-bold outline-none border border-transparent focus:border-orange-400">
+                <input type="text" id="recipeCategory" placeholder="Kategorie..." class="w-full p-3 bg-slate-50 rounded-xl mb-3 text-sm outline-none border border-transparent focus:border-orange-400">
+                <textarea id="recipeContent" rows="12" placeholder="Zutaten & Schritte..." class="w-full p-4 bg-slate-50 rounded-2xl outline-none border border-transparent focus:border-orange-400 text-lg custom-scroll mb-4"></textarea>
+                <button id="saveBtn" onclick="saveRecipe()" class="w-full bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all text-sm uppercase">Speichern</button>
+            </div>
+        </div>
+        <div id="view-list" class="view-content hidden-view">
+            <div class="flex items-center gap-2 mb-4">
+                <button id="wakeLockBtn" onclick="toggleWakeLock()" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-bold">
+                    🕯️ Display AN: <span id="wakeStatus">OFF</span>
+                </button>
+            </div>
+            <input type="text" id="searchInput" onkeyup="renderRecipes()" placeholder="🔍 Suche..." class="w-full p-4 bg-white border rounded-2xl outline-none shadow-sm focus:border-orange-400 text-lg mb-4">
+            <div id="categoryFilters" class="flex flex-wrap gap-2 mb-6"></div>
+            <div id="recipeList" class="space-y-6"></div>
+        </div>
     </main>
-
+    <div id="backupModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 opacity-0 pointer-events-none transition-all duration-200">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl text-center border border-slate-100">
+            <h3 class="text-base font-bold text-slate-800 mb-4">Daten sichern?</h3>
+            <div class="flex gap-3">
+                <button onclick="closeBackupModal()" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-2xl text-[11px] font-bold">Abbrechen</button>
+                <button onclick="confirmDownload()" class="flex-1 py-3 bg-orange-500 text-white rounded-2xl text-[11px] font-bold">Speichern</button>
+            </div>
+        </div>
+    </div>
     <script>
-        // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker registriert'))
-                    .catch(err => console.error('Service Worker Fehler:', err));
-            });
+            navigator.serviceWorker.register('sw.js').catch(console.error);
         }
-
-        let recipes = [];
+        const DB_NAME = 'GourmetArchivDB';
+        const STORE_NAME = 'recipes';
         let editId = null;
         let activeCategory = 'Alle';
         let wakeLock = null;
-
-        window.onload = function() {
-            const data = localStorage.getItem('gourmet_data_v4');
-            if (data) { recipes = JSON.parse(data); renderRecipes(); }
-        };
-
-        async function toggleWakeLock() {
-            if (!('wakeLock' in navigator)) {
-                alert("Browser unterstützt kein WakeLock.");
-                return;
-            }
-            try {
-                if (wakeLock === null) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    updateUI(true);
-                    document.addEventListener('visibilitychange', async () => {
-                        if (wakeLock !== null && document.visibilityState === 'visible') {
-                            wakeLock = await navigator.wakeLock.request('screen');
-                        }
-                    });
-                    wakeLock.addEventListener('release', () => {
-                        if(wakeLock === null) updateUI(false);
-                    });
-                } else {
-                    await wakeLock.release();
-                    wakeLock = null;
-                    updateUI(false);
-                }
-            } catch (err) {
-                console.error(err);
-            }
+        function openDB() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => e.target.result.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                request.onsuccess = (e) => resolve(e.target.result);
+            });
         }
-
-        function updateUI(isActive) {
-            const btn = document.getElementById('wakeLockBtn');
-            const status = document.getElementById('wakeStatus');
-            if(isActive) {
-                status.innerText = 'AN';
-                btn.classList.replace('bg-slate-100', 'bg-orange-500');
-                btn.classList.replace('text-slate-600', 'text-white');
-            } else {
-                status.innerText = 'OFF';
-                btn.classList.replace('bg-orange-500', 'bg-slate-100');
-                btn.classList.replace('text-white', 'text-slate-600');
-            }
+        async function putRecipe(recipe) {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).put(recipe);
+            return new Promise(r => tx.oncomplete = r);
         }
-
-        function openBackupModal() { document.getElementById('backupModal').classList.add('modal-active'); }
-        function closeBackupModal() { document.getElementById('backupModal').classList.remove('modal-active'); }
-        function confirmDownload() {
-            const file = new Blob([JSON.stringify(recipes, null, 2)], {type: 'application/json'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(file); a.download = `archiv.json`; a.click();
-            closeBackupModal();
+        async function getAllRecipes() {
+            const db = await openDB();
+            return new Promise(resolve => {
+                const req = db.transaction(STORE_NAME).objectStore(STORE_NAME).getAll();
+                req.onsuccess = () => resolve(req.result.sort((a,b) => b.id - a.id));
+            });
         }
-
-        function saveRecipe() {
+        async function removeRecipe(id) {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).delete(id);
+            return new Promise(r => tx.oncomplete = r);
+        }
+        function switchView(view) {
+            document.getElementById('view-editor').classList.add('hidden-view');
+            document.getElementById('view-list').classList.add('hidden-view');
+            document.getElementById('tab-editor').classList.remove('active-tab', 'text-slate-400');
+            document.getElementById('tab-list').classList.remove('active-tab', 'text-slate-400');
+            document.getElementById('view-' + view).classList.remove('hidden-view');
+            document.getElementById('tab-' + view).classList.add('active-tab');
+            const other = view === 'editor' ? 'list' : 'editor';
+            document.getElementById('tab-' + other).classList.add('text-slate-400');
+            if(view === 'list') renderRecipes();
+        }
+        async function saveRecipe() {
             const t = document.getElementById('recipeTitle'), c = document.getElementById('recipeContent'), cat = document.getElementById('recipeCategory');
             if(!t.value || !c.value) return;
-            const categoryValue = cat.value.trim() || 'Allgemein';
-            if(editId !== null) {
-                const index = recipes.findIndex(r => r.id === editId);
-                recipes[index] = { ...recipes[index], title: t.value, content: c.value, category: categoryValue };
-                editId = null;
-            } else {
-                recipes.unshift({ id: Date.now(), title: t.value, content: c.value, category: categoryValue, date: new Date().toLocaleDateString('de-DE') });
-            }
-            localStorage.setItem('gourmet_data_v4', JSON.stringify(recipes));
+            await putRecipe({
+                id: editId || Date.now(),
+                title: t.value,
+                content: c.value,
+                category: cat.value.trim() || 'Allgemein',
+                date: new Date().toLocaleDateString('de-DE')
+            });
             t.value = ''; c.value = ''; cat.value = '';
+            editId = null;
             document.getElementById('formTitle').innerText = "Neues Rezept";
-            renderRecipes();
+            switchView('list');
         }
-
-        function renderRecipes() {
+        async function renderRecipes() {
+            const recipes = await getAllRecipes();
             const list = document.getElementById('recipeList');
             const query = document.getElementById('searchInput').value.toLowerCase();
             list.innerHTML = '';
@@ -160,37 +134,62 @@
             document.getElementById('categoryFilters').innerHTML = categories.map(cat => `
                 <button onclick="activeCategory='${cat}';renderRecipes()" class="px-3 py-1.5 rounded-full text-[10px] font-bold border ${activeCategory===cat?'bg-orange-500 text-white':'bg-white text-slate-500'}">${cat}</button>
             `).join('');
-
             recipes.filter(r => (activeCategory==='Alle'||r.category===activeCategory) && (r.title.toLowerCase().includes(query))).forEach(r => {
                 const card = document.createElement('div');
                 card.className = 'bg-white p-6 rounded-3xl shadow-sm border border-slate-100';
-                card.innerHTML = `
-                    <div class="flex justify-between border-b pb-3 mb-4">
+                card.innerHTML = `<div class="flex justify-between border-b pb-3 mb-4">
                         <div><h3 class="font-bold text-xl">${r.title}</h3><span class="text-[9px] bg-orange-100 text-orange-600 px-2 py-0.5 rounded uppercase font-bold">${r.category}</span></div>
                         <div class="flex gap-1">
-                            <button onclick="editRecipe(${r.id})" class="p-2 text-slate-300 hover:text-orange-500 transition-colors">✏️</button>
-                            <button onclick="deleteRecipe(${r.id})" class="p-2 text-slate-300 hover:text-red-500 transition-colors">🗑️</button>
+                            <button onclick="editRecipe(${r.id})" class="p-2">✏️</button>
+                            <button onclick="deleteRecipe(${r.id})" class="p-2">🗑️</button>
                         </div>
                     </div>
                     <div class="whitespace-pre-wrap text-lg text-slate-600">${r.content}</div>`;
                 list.appendChild(card);
             });
         }
-
-        function editRecipe(id) {
+        async function editRecipe(id) {
+            const recipes = await getAllRecipes();
             const r = recipes.find(rec => rec.id === id);
             document.getElementById('recipeTitle').value = r.title;
             document.getElementById('recipeContent').value = r.content;
             document.getElementById('recipeCategory').value = r.category;
-            document.getElementById('formTitle').innerText = "Ändern";
-            editId = id; window.scrollTo(0,0);
+            document.getElementById('formTitle').innerText = "Rezept bearbeiten";
+            editId = id; 
+            switchView('editor');
         }
-
-        function deleteRecipe(id) { if(confirm("Löschen?")) { recipes = recipes.filter(r => r.id !== id); localStorage.setItem('gourmet_data_v4', JSON.stringify(recipes)); renderRecipes(); } }
-        function importBackup(e) {
+        async function deleteRecipe(id) {
+            if(confirm("Löschen?")) { await removeRecipe(id); renderRecipes(); }
+        }
+        function openBackupModal() { document.getElementById('backupModal').classList.add('modal-active'); }
+        function closeBackupModal() { document.getElementById('backupModal').classList.remove('modal-active'); }
+        async function confirmDownload() {
+            const recipes = await getAllRecipes();
+            const file = new Blob([JSON.stringify(recipes, null, 2)], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(file); a.download = `archiv.json`; a.click();
+            closeBackupModal();
+        }
+        async function importBackup(e) {
             const reader = new FileReader();
-            reader.onload = (ev) => { recipes = JSON.parse(ev.target.result); localStorage.setItem('gourmet_data_v4', JSON.stringify(recipes)); renderRecipes(); };
+            reader.onload = async (ev) => {
+                const data = JSON.parse(ev.target.result);
+                for(let r of data) await putRecipe(r);
+                renderRecipes();
+            };
             reader.readAsText(e.target.files[0]);
+        }
+        async function toggleWakeLock() {
+            if (!('wakeLock' in navigator)) return;
+            if (!wakeLock) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    document.getElementById('wakeStatus').innerText = 'AN';
+                } catch (err) {}
+            } else {
+                await wakeLock.release(); wakeLock = null;
+                document.getElementById('wakeStatus').innerText = 'OFF';
+            }
         }
     </script>
 </body>
